@@ -912,7 +912,21 @@ class Data:
         Auth.Inst().AssertAuthenticated()
         try:
             self.RequireSession()
-            self.session.xenapi.PIF.reconfigure_ip(inPIF['opaqueref'],  inMode,  inIP,  inNetmask,  inGateway, FirstValue(inDNS, ''))
+            if inPIF['primary_address_type'].lower() == 'ipv4':
+                self.session.xenapi.PIF.reconfigure_ip(inPIF['opaqueref'],  inMode,  inIP,  inNetmask,  inGateway, FirstValue(inDNS, ''))
+                if inPIF['ipv6_configuration_mode'].lower() == 'static':
+                    # Update IPv6 DNS as well
+                    self.session.xenapi.PIF.reconfigure_ipv6(
+                        inPIF['opaqueref'], inPIF['ipv6_configuration_mode'], ','.join(inPIF['IPv6']), inPIF['ipv6_gateway'], FirstValue(inDNS, '')
+                    )
+            else:
+                inIPv6 = inIP + '/' + inNetmask
+                self.session.xenapi.PIF.reconfigure_ipv6(inPIF['opaqueref'],  inMode,  inIPv6,  inGateway, FirstValue(inDNS, ''))
+                if inPIF['ip_configuration_mode'].lower() == 'static':
+                    # Update IPv4 DNS as well
+                    self.session.xenapi.PIF.reconfigure_ip(
+                        inPIF['opaqueref'], inPIF['ip_configuration_mode'], inPIF['IP'], inPIF['netmask'], inPIF['gateway'], FirstValue(inDNS, '')
+                    )
             self.session.xenapi.host.management_reconfigure(inPIF['opaqueref'])
             status, output = commands.getstatusoutput('%s host-signal-networking-change' % (Config.Inst().XECLIPath()))
             if status != 0:
@@ -932,6 +946,7 @@ class Data:
             # Disable the PIF that the management interface was using
             for pif in self.derived.managementpifs([]):
                 self.session.xenapi.PIF.reconfigure_ip(pif['opaqueref'], 'None','' ,'' ,'' ,'')
+                self.session.xenapi.PIF.reconfigure_ipv6(pif['opaqueref'], 'None','' ,'' ,'')
         finally:
             # Network reconfigured so this link is potentially no longer valid
             self.session = Auth.Inst().CloseSession(self.session)
