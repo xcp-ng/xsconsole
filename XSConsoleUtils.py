@@ -13,7 +13,7 @@
 # with this program; if not, write to the Free Software Foundation, Inc.,
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
-import re, signal, string, subprocess, time, types
+import re, signal, socket, string, subprocess, time, types
 from pprint import pprint
 
 from XSConsoleBases import *
@@ -186,17 +186,31 @@ class TimeUtils:
         if retVal <= 3601.0: # Handle the effect of daylight savings on start of epoch
             retVal = 0.0
         return retVal
-    
+
 class IPUtils:
     @classmethod
+    def ValidateIPFamily(cls, text, family):
+        try:
+            socket.inet_pton(family, text)
+            return True
+        except socket.error:
+            return False
+
+    @classmethod
+    def ValidateIPv4(cls, text):
+        return cls.ValidateIPFamily(text, socket.AF_INET)
+
+    @classmethod
+    def ValidateIPv6(cls, text):
+        return cls.ValidateIPFamily(text, socket.AF_INET6)
+
+    @classmethod
     def ValidateIP(cls, text):
-        ipv4_re = '^(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)(\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)){3}'
-        ipv6_re = '^(([0-9a-fA-F]{1,4}:){7,7}[0-9a-fA-F]{1,4}|([0-9a-fA-F]{1,4}:){1,7}:|([0-9a-fA-F]{1,4}:){1,6}:[0-9a-fA-F]{1,4}|([0-9a-fA-F]{1,4}:){1,5}(:[0-9a-fA-F]{1,4}){1,2}|([0-9a-fA-F]{1,4}:){1,4}(:[0-9a-fA-F]{1,4}){1,3}|([0-9a-fA-F]{1,4}:){1,3}(:[0-9a-fA-F]{1,4}){1,4}|([0-9a-fA-F]{1,4}:){1,2}(:[0-9a-fA-F]{1,4}){1,5}|[0-9a-fA-F]{1,4}:((:[0-9a-fA-F]{1,4}){1,6})|:((:[0-9a-fA-F]{1,4}){1,7}|:)|fe80:(:[0-9a-fA-F]{0,4}){0,4}%[0-9a-zA-Z]{1,}|::(ffff(:0{1,4}){0,1}:){0,1}((25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9])\.){3,3}(25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9])|([0-9a-fA-F]{1,4}:){1,4}:((25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9])\.){3,3}(25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9]))'
-        return re.match(ipv4_re, text) or re.match(ipv6_re, text)
-        
+        return cls.ValidateIPv4(text) or cls.ValidateIPv6(text)
+
     @classmethod
     def ValidateNetmask(cls, text):
-        return cls.ValidateIP(text) or (int(text) > 4 and int(text) < 128)
+        return cls.ValidateIPv4(text) or (int(text) > 4 and int(text) < 128)
 
     @classmethod
     def AssertValidNetmask(cls, inIP):
