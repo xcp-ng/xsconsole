@@ -920,7 +920,8 @@ class Data:
                         inPIF['opaqueref'], inPIF['ipv6_configuration_mode'], ','.join(inPIF['IPv6']), inPIF['ipv6_gateway'], FirstValue(inDNS, '')
                     )
             else:
-                inIPv6 = inIP + '/' + inNetmask
+                inIPv6 = '' if inIP == '0.0.0.0' else inIP + '/' + inNetmask
+                inGateway = '' if inGateway == '0.0.0.0' else inGateway
                 self.session.xenapi.PIF.reconfigure_ipv6(inPIF['opaqueref'],  inMode,  inIPv6,  inGateway, FirstValue(inDNS, ''))
                 if inPIF['ip_configuration_mode'].lower() == 'static':
                     # Update IPv4 DNS as well
