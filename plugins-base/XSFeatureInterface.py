@@ -53,11 +53,13 @@ class InterfaceDialogue(Dialogue):
 
         self.nicMenu = Menu(self, None, "Configure Management Interface", choiceDefs)
 
-        self.modeMenu = Menu(self, None, Lang("Select IP Address Configuration Mode"), [
-            ChoiceDef(Lang("DHCP"), lambda: self.HandleModeChoice('DHCP2') ),
-            ChoiceDef(Lang("DHCP with Manually Assigned Hostname"), lambda: self.HandleModeChoice('DHCPMANUAL') ),
-            ChoiceDef(Lang("Static"), lambda: self.HandleModeChoice('STATIC') )
-            ])
+        mode_choicedefs = []
+        if(currentPIF['primary_address_type'].lower() == 'ipv6'):
+            mode_choicedefs.append(ChoiceDef(Lang("Autoconf"), lambda : self.HandleModeChoice("AUTOCONF") ))
+        mode_choicedefs.append(ChoiceDef(Lang("DHCP"), lambda: self.HandleModeChoice('DHCP2') ))
+        mode_choicedefs.append(ChoiceDef(Lang("DHCP with Manually Assigned Hostname"), lambda: self.HandleModeChoice('DHCPMANUAL') ))
+        mode_choicedefs.append(ChoiceDef(Lang("Static"), lambda: self.HandleModeChoice('STATIC') ))
+        self.modeMenu = Menu(self, None, Lang("Select IP Address Configuration Mode"), mode_choicedefs)
 
         self.postDHCPMenu = Menu(self, None, Lang("Accept or Edit"), [
             ChoiceDef(Lang("Continue With DHCP Enabled"), lambda: self.HandlePostDHCPChoice('CONTINUE') ),
@@ -175,8 +177,10 @@ class InterfaceDialogue(Dialogue):
                 pane.AddStatusField(Lang("Netmask",  16),  self.netmask)
                 pane.AddStatusField(Lang("Gateway",  16),  self.gateway)
 
-            if self.mode != 'Static' and self.hostname == '':
+            if self.mode == 'DHCP' and self.hostname == '':
                 pane.AddStatusField(Lang("Hostname",  16), Lang("Assigned by DHCP"))
+            elif self.mode == 'Autoconf' and self.hostname == '':
+                pane.AddStatusField(Lang("Hostname", 16), Lang("Automatically assigned"))
             else:
                 pane.AddStatusField(Lang("Hostname",  16), self.hostname)
 
@@ -382,6 +386,9 @@ class InterfaceDialogue(Dialogue):
             self.hostname = Data.Inst().host.hostname('')
             self.mode = 'Static'
             self.ChangeState('STATICIP')
+        elif inChoice == 'AUTOCONF':
+            self.mode = 'Autoconf'
+            self.ChangeState('PRECOMMIT')
 
     def HandlePostDHCPChoice(self,  inChoice):
         if inChoice == 'CONTINUE':
