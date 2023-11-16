@@ -982,7 +982,11 @@ class Data:
         retVal = inDefault
 
         for pif in self.derived.managementpifs([]):
-            retVal = pif['netmask']
+            ipv6 = pif['primary_address_type'].lower() == 'ipv6'
+            try:
+                retVal = pif['IPv6'][0].split('/')[1] if ipv6 else pif['netmask']
+            except IndexError:
+                return ''
             if retVal:
                 break
 
@@ -992,7 +996,8 @@ class Data:
         retVal = inDefault
 
         for pif in self.derived.managementpifs([]):
-            retVal = pif['gateway']
+            ipv6 = pif['primary_address_type'].lower() == 'ipv6'
+            retVal = pif['ipv6_gateway'] if ipv6 else pif['gateway']
             if retVal:
                 break
 
