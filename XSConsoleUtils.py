@@ -229,7 +229,7 @@ class IPUtils:
     @classmethod
     def AssertValidHostname(cls, inName):
         # Allow 0-9, A-Z, a-z and hyphen, but disallow hyphen at start and end
-        if not re.match(r'[0-9A-Za-z]([-0-9A-Za-z]{0,61}[0-9A-Za-z]|)$', inName):
+        if not (re.match(r'[0-9A-Za-z]([-0-9A-Za-z]{0,61}[0-9A-Za-z]|)$', inName) or cls.AssertValidIP(inName)):
             raise Exception(Lang('Invalid hostname'))
         return inName
 
