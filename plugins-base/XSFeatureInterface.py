@@ -28,6 +28,7 @@ class InterfaceDialogue(Dialogue):
         self.nic=None
         self.converting = False
         currentPIF = None
+        self.oldPIF = None
         choiceArray = []
         for i in range(len(data.host.PIFs([]))):
             pif = data.host.PIFs([])[i]
@@ -45,6 +46,7 @@ class InterfaceDialogue(Dialogue):
 
             choiceDefs.append(ChoiceDef(choiceName, lambda: self.HandleNICChoice(self.nicMenu.ChoiceIndex())))
 
+        self.oldPIF = currentPIF
         if len(choiceDefs) == 0:
             XSLog('Configure Management Interface found no PIFs to present')
             choiceDefs.append(ChoiceDef(Lang("<No interfaces present>"), None))
@@ -84,6 +86,7 @@ class InterfaceDialogue(Dialogue):
         self.netmask = '0.0.0.0'
         self.gateway = '0.0.0.0'
         self.hostname = data.host.hostname('')
+        self.oldIP = self.IP
 
         if currentPIF is not None:
             ipv6 = currentPIF['primary_address_type'].lower() == 'ipv6'
@@ -93,6 +96,7 @@ class InterfaceDialogue(Dialogue):
             if self.mode.lower().startswith('static'):
                 if 'IP' in currentPIF:
                     self.IP = currentPIF['IPv6'][0].split('/')[0] if ipv6 else currentPIF['IP']
+                    self.oldIP = self.IP
                 if 'netmask' in currentPIF:
                     self.netmask = currentPIF['IPv6'][0].split('/')[1] if ipv6 else currentPIF['netmask']
                 if 'gateway' in currentPIF:
@@ -459,6 +463,11 @@ class InterfaceDialogue(Dialogue):
             else:
                 data.HostnameSet(self.hostname)
             data.ReconfigureManagement(pif, self.mode, self.IP,  self.netmask, self.gateway, dns)
+
+            # Reset old PIF in order to prevent network conflicts
+            if self.oldPIF != pif and self.IP == self.oldIP:
+                data.ReconfigureManagement(self.oldPIF, 'static', self.oldIP,  '0.0.0.0', '0.0.0.0', '')
+
         data.Update()
         self.hostname = data.host.hostname('') # Hostname may have changed.  Must be after data.Update()
 
