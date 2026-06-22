@@ -1,5 +1,5 @@
 [Unit]
-Description=XenServer Console
+Description=XCP-ng Console
 After=xapi.service plymouth-quit-wait.service move-kernel-messages.service
 Wants=xapi.service
 
