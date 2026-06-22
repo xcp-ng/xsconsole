@@ -60,12 +60,18 @@ class CursesPalette:
             bgNormal = curses.COLOR_BLUE
             bgDark = curses.COLOR_BLACK
 
-            curses.init_color(fgBright, *config.Colour(prefix+'fg_bright'))
-            curses.init_color(fgNormal, *config.Colour(prefix+'fg_normal'))
-            curses.init_color(fgDark, *config.Colour(prefix+'fg_dark'))
-            curses.init_color(bgBright, *config.Colour(prefix+'bg_bright'))
-            curses.init_color(bgNormal, *config.Colour(prefix+'bg_normal'))
-            curses.init_color(bgDark, *config.Colour(prefix+'bg_dark'))
+            # Theme modified for XCP-ng
+            curses.init_color(fgBright, 560, 518, 1000)
+            # Normal text
+            curses.init_color(fgNormal, 972, 972, 980)
+            # Text on top of main
+            curses.init_color(fgDark, 1000, 63, 82)
+            # Popup background
+            curses.init_color(bgBright, 102, 106, 220)
+            # Internal background
+            curses.init_color(bgNormal, 78, 78, 117)
+            # Background
+            curses.init_color(bgDark, 94, 90, 196)
 
         else:
             # Set sensible defaults for non-colour-changing terminals
